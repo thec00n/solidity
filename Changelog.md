@@ -27,7 +27,6 @@ Build System:
 Language Features:
  * Provide access to creation and runtime code of contracts via ``type(C).creationCode`` / ``type(C).runtimeCode``.
 
-
 Compiler Features:
  * Control Flow Graph: Warn about unreachable code.
  * SMTChecker: Support basic typecasts without truncation.
