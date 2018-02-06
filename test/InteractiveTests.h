@@ -22,6 +22,7 @@
 #include <test/libsolidity/SyntaxTest.h>
 #include <test/libsolidity/SMTCheckerJSONTest.h>
 #include <test/libyul/YulOptimizerTest.h>
+#include <test/libyul/YulInterpreterTest.h>
 #include <test/libyul/ObjectCompilerTest.h>
 
 #include <boost/filesystem.hpp>
@@ -50,6 +51,7 @@ Testsuite const g_interactiveTestsuites[] = {
 /*
 	Title                  Path            Subpath                SMT    IPC    Creator function */
 	{"Yul Optimizer",       "libyul",      "yulOptimizerTests",   false, false, &yul::test::YulOptimizerTest::create},
+	{"Yul Interpreter",     "libyul",      "yulInterpreterTests", false, false, &yul::test::YulInterpreterTest::create},
 	{"Yul Object Compiler", "libyul",      "objectCompiler",      false, false, &yul::test::ObjectCompilerTest::create},
 	{"Syntax",              "libsolidity", "syntaxTests",         false, false, &SyntaxTest::create},
 	{"JSON AST",            "libsolidity", "ASTJSON",             false, false, &ASTJSONTest::create},
