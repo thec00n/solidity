@@ -948,22 +948,29 @@ string CompilerStack::createMetadata(Contract const& _contract) const
 
 bytes CompilerStack::createCBORMetadata(string const& _metadata, bool _experimentalMode)
 {
+	bytes versionBytes = asBytes(VersionStringStrict);
+	unsigned versionBytesSize = versionBytes.size();
+	solAssert(versionBytesSize <= 0xff, "");
 	bytes cborEncodedHash =
 		// CBOR-encoding of the key "bzzr0"
-		bytes{0x65, 'b', 'z', 'z', 'r', '0'}+
+		bytes{0x65, 'b', 'z', 'z', 'r', '0'} +
 		// CBOR-encoding of the hash
-		bytes{0x58, 0x20} + dev::swarmHash(_metadata).asBytes();
+		bytes{0x58, 0x20} + dev::swarmHash(_metadata).asBytes() +
+		// CBOR-encoding of the key "solc"
+		bytes{0x64, 's', 'o', 'l', 'c'} +
+		// CBOR-encoding of the version string
+		((versionBytesSize <= 23) ? bytes{static_cast<unsigned char>(0x60 + versionBytesSize)} : bytes{0x78, static_cast<unsigned char>(versionBytesSize)}) + versionBytes;
 	bytes cborEncodedMetadata;
 	if (_experimentalMode)
 		cborEncodedMetadata =
 			// CBOR-encoding of {"bzzr0": dev::swarmHash(metadata), "experimental": true}
-			bytes{0xa2} +
+			bytes{0xa3} +
 			cborEncodedHash +
 			bytes{0x6c, 'e', 'x', 'p', 'e', 'r', 'i', 'm', 'e', 'n', 't', 'a', 'l', 0xf5};
 	else
 		cborEncodedMetadata =
 			// CBOR-encoding of {"bzzr0": dev::swarmHash(metadata)}
-			bytes{0xa1} +
+			bytes{0xa2} +
 			cborEncodedHash;
 	solAssert(cborEncodedMetadata.size() <= 0xffff, "Metadata too large");
 	// 16-bit big endian length
