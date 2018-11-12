@@ -1088,12 +1088,6 @@ Avoiding Naming Collisions
 This convention is suggested when the desired name collides with that of a
 built-in or otherwise reserved name.
 
-
-General Recommendations
-=======================
-
-TODO
-
 .. _natspec:
 
 *******
@@ -1154,3 +1148,70 @@ All tags are optional.
 +-------------+-------------------------------------------+-------------------------------+
 | ``@return`` | The return value of a contract's function | function                      |
 +-------------+-------------------------------------------+-------------------------------+
+
+.. _documentation-style:
+
+*************
+Documentation
+*************
+
+The following are style recommendations specifically for documentation
+contributions to Solidity.
+
+British English
+===============
+
+Use British English, unless using project or brand names. For a good guide to
+what this means read `this guide from Oxford dictionaries <https://en.oxforddictionaries.com/spelling/british-and-spelling>`_
+or `this tutorial from the British Council <https://learnenglish.britishcouncil.org/en/intermediate-grammar/british-english-and-american-english>`_.
+
+Title Case for Headings
+=======================
+
+Use title case for headings. This means capitalise all principal words in
+titles, but not articles, conjunctions, and prepositions unless they start the
+title.
+
+For example, the following are all correct:
+
+* Title Case for Headings
+* For Headings Use Title Case
+* Local and State Variable Names
+* Order of Layout
+
+Expand Contractions
+===================
+
+Use expanded contractions for words, for example:
+
+* "Do not" instead of "Don't".
+* "Can not" instead of "Can't".
+
+Active and Passive Voice
+========================
+
+Active voice is typically recommended for tutorial style documentation as it
+helps the reader understand who or what is performing a task. However, as the
+Solidity documentation is a mixture of tutorials and reference content, passive
+voice is sometimes more applicable.
+
+As a summary:
+
+* Use passive voice when describing how an aspect of Solidity or the Ethereum Virtual Machine works.
+* Use active voice when describing recommendations on how to apply an aspect of Solidity.
+
+For example, the below is in passive voice as it discusses an aspect of Solidity:
+
+  Functions can be declared ``pure`` in which case they promise not to read
+  from or modify the state.
+
+For example, the below is in active voice as it discusses an application of Solidity:
+
+  When invoking the compiler, you can specify how to discover the first element
+  of a path, and also path prefix remappings.
+
+Common Terms
+============
+
+* Function parameters and return types, not input and output parameters.
+>>>>>>> Begin documentation style guide
