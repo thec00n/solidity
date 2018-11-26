@@ -1214,4 +1214,8 @@ Common Terms
 ============
 
 * Function parameters and return types, not input and output parameters.
->>>>>>> Begin documentation style guide
+
+Code Examples
+=============
+
+* Ensure that all code examples begin with the correct `pragma` version, which is `pragma solidity >=0.4.0 <0.6.0;`.
