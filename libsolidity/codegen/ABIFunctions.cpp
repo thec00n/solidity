@@ -338,8 +338,14 @@ string ABIFunctions::validatorFunction(Type const& _type, bool _revertOnFailure)
 			else
 			{
 				size_t numBits = type.numBytes() * 8;
-				u256 mask = ((u256(1) << numBits) - 1) << (256 - numBits);
-				templ("body", "cleaned := and(value, " + toCompactHexWithPrefix(mask) + ")");
+				u256 mask = ~(((u256(1) << numBits) - 1) << (256 - numBits));
+				Whiskers w("if and(value, <mask>) { <failure> } cleaned := value");
+				w("mask", toCompactHexWithPrefix(mask));
+				if (_revertOnFailure)
+					w("failure", "revert(0, 0)");
+				else
+					w("failure", "invalid()");
+				templ("body", w.render());
 			}
 			break;
 		}
