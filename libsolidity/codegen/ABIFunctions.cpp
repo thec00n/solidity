@@ -203,9 +203,9 @@ string ABIFunctions::EncodingOptions::toFunctionNameSuffix() const
 	return suffix;
 }
 
-string ABIFunctions::cleanupFunction(Type const& _type, bool _revertOnFailure)
+string ABIFunctions::cleanupFunction(Type const& _type)
 {
-	string functionName = string("cleanup_") + (_revertOnFailure ? "revert_" : "assert_") + _type.identifier();
+	string functionName = string("cleanup_") + _type.identifier();
 	return createFunction(functionName, [&]() {
 		Whiskers templ(R"(
 			function <functionName>(value) -> cleaned {
@@ -216,7 +216,7 @@ string ABIFunctions::cleanupFunction(Type const& _type, bool _revertOnFailure)
 		switch (_type.category())
 		{
 		case Type::Category::Address:
-			templ("body", "cleaned := " + cleanupFunction(IntegerType(160), _revertOnFailure) + "(value)");
+			templ("body", "cleaned := " + cleanupFunction(IntegerType(160)) + "(value)");
 			break;
 		case Type::Category::Integer:
 		{
@@ -265,7 +265,91 @@ string ABIFunctions::cleanupFunction(Type const& _type, bool _revertOnFailure)
 				StateMutability::Payable :
 				StateMutability::NonPayable
 			);
-			templ("body", "cleaned := " + cleanupFunction(addressType, _revertOnFailure) + "(value)");
+			templ("body", "cleaned := " + cleanupFunction(addressType) + "(value)");
+			break;
+		}
+		case Type::Category::Enum:
+		{
+			size_t members = dynamic_cast<EnumType const&>(_type).numberOfMembers();
+			solAssert(members > 0, "empty enum should have caused a parser error.");
+			templ("body", "cleaned := and(value, " + toCompactHexWithPrefix(members) + ")");
+			break;
+		}
+		case Type::Category::InaccessibleDynamic:
+			templ("body", "cleaned := 0");
+			break;
+		default:
+			solAssert(false, "Cleanup of type " + _type.identifier() + " requested.");
+		}
+
+		return templ.render();
+	});
+}
+
+string ABIFunctions::validatorFunction(Type const& _type, bool _revertOnFailure)
+{
+	string functionName = string("validator_") + (_revertOnFailure ? "revert_" : "assert_") + _type.identifier();
+	return createFunction(functionName, [&]() {
+		Whiskers templ(R"(
+			function <functionName>(value) -> cleaned {
+				<body>
+			}
+		)");
+		templ("functionName", functionName);
+		switch (_type.category())
+		{
+		case Type::Category::Address:
+			templ("body", "cleaned := " + validatorFunction(IntegerType(160), _revertOnFailure) + "(value)");
+			break;
+		case Type::Category::Integer:
+		{
+			IntegerType const& type = dynamic_cast<IntegerType const&>(_type);
+			if (type.numBits() == 256)
+				templ("body", "cleaned := value");
+			else if (type.isSigned())
+				templ("body", "cleaned := signextend(" + to_string(type.numBits() / 8 - 1) + ", value)");
+			else
+				templ("body", "cleaned := and(value, " + toCompactHexWithPrefix((u256(1) << type.numBits()) - 1) + ")");
+			break;
+		}
+		case Type::Category::RationalNumber:
+			// FIXME: implement this validation
+			templ("body", "cleaned := value");
+			break;
+		case Type::Category::Bool:
+			templ("body", "cleaned := iszero(iszero(value))");
+			break;
+		case Type::Category::FixedPoint:
+			solUnimplemented("Fixed point types not implemented.");
+			break;
+		case Type::Category::Array:
+		case Type::Category::Struct:
+			solAssert(_type.dataStoredIn(DataLocation::Storage), "Cleanup requested for non-storage reference type.");
+			templ("body", "cleaned := value");
+			break;
+		case Type::Category::FixedBytes:
+		{
+			FixedBytesType const& type = dynamic_cast<FixedBytesType const&>(_type);
+			if (type.numBytes() == 32)
+				templ("body", "cleaned := value");
+			else if (type.numBytes() == 0)
+				// This is disallowed in the type system.
+				solAssert(false, "");
+			else
+			{
+				size_t numBits = type.numBytes() * 8;
+				u256 mask = ((u256(1) << numBits) - 1) << (256 - numBits);
+				templ("body", "cleaned := and(value, " + toCompactHexWithPrefix(mask) + ")");
+			}
+			break;
+		}
+		case Type::Category::Contract:
+		{
+			AddressType addressType(dynamic_cast<ContractType const&>(_type).isPayable() ?
+				StateMutability::Payable :
+				StateMutability::NonPayable
+			);
+			templ("body", "cleaned := " + validatorFunction(addressType, _revertOnFailure) + "(value)");
 			break;
 		}
 		case Type::Category::Enum:
@@ -1138,14 +1222,14 @@ string ABIFunctions::abiDecodingFunctionValueType(const Type& _type, bool _fromM
 	return createFunction(functionName, [&]() {
 		Whiskers templ(R"(
 			function <functionName>(offset, end) -> value {
-				value := <cleanup>(<load>(offset))
+				value := <validator>(<load>(offset))
 			}
 		)");
 		templ("functionName", functionName);
 		templ("load", _fromMemory ? "mload" : "calldataload");
 		// Cleanup itself should use the type and not decodingType, because e.g.
 		// the decoding type of an enum is a plain int.
-		templ("cleanup", cleanupFunction(_type, true));
+		templ("validator", validatorFunction(_type, true));
 		return templ.render();
 	});
 

@@ -8,6 +8,7 @@ Bugfixes:
 
 
 Language Features:
+ * ABI Decoder: The experimental decoder to raise an error on dirty inputs.
 
 
 Compiler Features:
