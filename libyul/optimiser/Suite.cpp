@@ -39,6 +39,7 @@
 #include <libyul/optimiser/SSATransform.h>
 #include <libyul/optimiser/StructuralSimplifier.h>
 #include <libyul/optimiser/RedundantAssignEliminator.h>
+#include <libyul/optimiser/VarNameCleaner.h>
 #include <libyul/AsmAnalysisInfo.h>
 #include <libyul/AsmData.h>
 #include <libyul/AsmPrinter.h>
@@ -138,6 +139,8 @@ void OptimiserSuite::run(
 	ExpressionJoiner::run(ast);
 	Rematerialiser::run(_dialect, ast);
 	UnusedPruner::runUntilStabilised(_dialect, ast, reservedIdentifiers);
+
+	VarNameCleaner{_dialect}(ast);
 
 	_ast = std::move(ast);
 }
