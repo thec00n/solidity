@@ -270,9 +270,8 @@ string ABIFunctions::cleanupFunction(Type const& _type)
 		}
 		case Type::Category::Enum:
 		{
-			size_t members = dynamic_cast<EnumType const&>(_type).numberOfMembers();
-			solAssert(members > 0, "empty enum should have caused a parser error.");
-			templ("body", "cleaned := and(value, " + toCompactHexWithPrefix(members) + ")");
+			// Out of range enums cannot be truncated unambigiously and therefore it should be an error.
+			templ("body", "cleaned := " + validatorFunction(_type) + "(value)");
 			break;
 		}
 		case Type::Category::InaccessibleDynamic:
