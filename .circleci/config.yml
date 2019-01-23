@@ -198,11 +198,11 @@ jobs:
 
   build_wasm32:
     docker:
-      - image: clangbuiltlinux/ubuntu
+      - image: ewasm/clang-wasm
     environment:
       TERM: xterm
-      CC: /usr/bin/clang-7
-      CXX: /usr/bin/clang++-7
+      CC: /usr/bin/clang
+      CXX: /usr/bin/clang++
       CMAKE_OPTIONS: -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/wasm32.cmake -DCMAKE_BUILD_TYPE=Release
     steps:
       - checkout
@@ -210,7 +210,7 @@ jobs:
           name: Install build dependencies
           command: |
             apt-get -qq update
-            apt-get -qy install clang-7 cmake libboost-regex-dev libboost-filesystem-dev libboost-test-dev libboost-system-dev libboost-program-options-dev libz3-dev wget
+            apt-get -qy install cmake libboost-regex-dev libboost-filesystem-dev libboost-test-dev libboost-system-dev libboost-program-options-dev wget
             ./scripts/install_obsolete_jsoncpp_1_7_4.sh
       - run: *setup_prerelease_commit_hash
       - run: *run_build
