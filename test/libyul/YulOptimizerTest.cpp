@@ -23,6 +23,7 @@
 
 #include <libyul/optimiser/BlockFlattener.h>
 #include <libyul/optimiser/VarDeclInitializer.h>
+#include <libyul/optimiser/VarNameCleaner.h>
 #include <libyul/optimiser/Disambiguator.h>
 #include <libyul/optimiser/CommonSubexpressionEliminator.h>
 #include <libyul/optimiser/NameCollector.h>
