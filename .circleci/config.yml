@@ -66,6 +66,7 @@ jobs:
           paths:
             - soljson.js
             - version.txt
+
   test_emscripten_solcjs:
     docker:
       - image: circleci/node:10
@@ -84,6 +85,7 @@ jobs:
           name: Test solcjs
           command: |
             test/solcjsTests.sh /tmp/workspace/soljson.js $(cat /tmp/workspace/version.txt)
+
   test_emscripten_external:
     docker:
       - image: circleci/node:10
@@ -102,6 +104,7 @@ jobs:
           name: External tests
           command: |
             test/externalTests.sh /tmp/workspace/soljson.js || test/externalTests.sh /tmp/workspace/soljson.js
+
   build_x86_linux:
     docker:
       - image: buildpack-deps:bionic
@@ -192,6 +195,30 @@ jobs:
       - run: *run_build
       - store_artifacts: *solc_artifact
       - persist_to_workspace: *all_artifacts
+
+  build_wasm32:
+    docker:
+      - image: clangbuiltlinux/ubuntu
+    environment:
+      TERM: xterm
+      CC: /usr/bin/clang-7
+      CXX: /usr/bin/clang++-7
+      CMAKE_OPTIONS: -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/wasm32.cmake -DCMAKE_BUILD_TYPE=Release
+    steps:
+      - checkout
+      - run:
+          name: Install build dependencies
+          command: |
+            apt-get -qq update
+            apt-get -qy install clang-7 cmake libboost-regex-dev libboost-filesystem-dev libboost-test-dev libboost-system-dev libboost-program-options-dev libz3-dev wget
+            ./scripts/install_obsolete_jsoncpp_1_7_4.sh
+      - run: *setup_prerelease_commit_hash
+      - run: *run_build
+      - store_artifacts: *solc_artifact
+      - persist_to_workspace:
+          root: build
+          paths:
+            - "*"
 
   test_check_spelling:
     docker:
@@ -366,3 +393,4 @@ workflows:
           <<: *build_on_tags
           requires:
             - build_x86_archlinux
+      - build_wasm32: *build_on_tags
