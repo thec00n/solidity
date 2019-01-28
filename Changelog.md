@@ -11,6 +11,7 @@ Language Features:
 
 Compiler Features:
  * C API (``libsolc`` / raw ``soljson.js``): Introduce ``solidity_free`` method which releases all internal buffers to save memory.
+ * Optimizer: Take shortest representation for store-as-data option in the constant optimizer.
 
 
 Bugfixes:

@@ -144,14 +144,15 @@ bigint CodeCopyMethod::gasNeeded() const
 		// Data gas for copy routines: Some bytes are zero, but we ignore them.
 		bytesRequired(copyRoutine()) * (m_params.isCreation ? GasCosts::txDataNonZeroGas : GasCosts::createDataGas),
 		// Data gas for data itself
-		dataGas(toBigEndian(m_value))
+		dataGas(toCompactBigEndian(m_value, 1))
 	);
 }
 
 AssemblyItems CodeCopyMethod::execute(Assembly& _assembly) const
 {
-	bytes data = toBigEndian(m_value);
+	bytes data = toCompactBigEndian(m_value, 1);
 	AssemblyItems actualCopyRoutine = copyRoutine();
+	actualCopyRoutine[3] = u256(data.size());
 	actualCopyRoutine[4] = _assembly.newData(data);
 	return actualCopyRoutine;
 }
@@ -162,8 +163,8 @@ AssemblyItems const& CodeCopyMethod::copyRoutine()
 		u256(0),
 		Instruction::DUP1,
 		Instruction::MLOAD, // back up memory
-		u256(32),
-		AssemblyItem(PushData, u256(1) << 16), // has to be replaced
+		u256(32), // replaced above in actualCopyRoutine[3]
+		AssemblyItem(PushData, u256(1) << 16), // replaced above in actualCopyRoutine[4]
 		Instruction::DUP4,
 		Instruction::CODECOPY,
 		Instruction::DUP2,
