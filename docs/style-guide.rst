@@ -1168,7 +1168,7 @@ or `this tutorial from the British Council <https://learnenglish.britishcouncil.
 Title Case for Headings
 =======================
 
-Use title case for headings. This means capitalise all principal words in
+Use `title case <http://titlecase.com>`_ for headings. This means capitalise all principal words in
 titles, but not articles, conjunctions, and prepositions unless they start the
 title.
 
@@ -1218,4 +1218,4 @@ Common Terms
 Code Examples
 =============
 
-* Ensure that all code examples begin with the correct `pragma` version, which is `pragma solidity >=0.4.0 <0.6.0;`.
+* Ensure that all code examples begin with the correct ``pragma`` version, which is ``pragma solidity >=0.4.0 <0.6.0;``.
