@@ -121,18 +121,11 @@ public:
 
 	/// Sets library addresses. Addresses are cleared iff @a _libraries is missing.
 	/// Will not take effect before running compile.
-	void setLibraries(std::map<std::string, h160> const& _libraries = std::map<std::string, h160>{})
-	{
-		m_libraries = _libraries;
-	}
+	void setLibraries(std::map<std::string, h160> const& _libraries = std::map<std::string, h160>{});
 
 	/// Changes the optimiser settings.
 	/// Will not take effect before running compile.
-	void setOptimiserSettings(bool _optimize, unsigned _runs = 200)
-	{
-		m_optimize = _optimize;
-		m_optimizeRuns = _runs;
-	}
+	void setOptimiserSettings(bool _optimize, unsigned _runs = 200);
 
 	/// Set the EVM version used before running compile.
 	/// When called without an argument it will revert to the default version.
@@ -146,7 +139,7 @@ public:
 	}
 
 	/// @arg _metadataLiteralSources When true, store sources as literals in the contract metadata.
-	void useMetadataLiteralSources(bool _metadataLiteralSources) { m_metadataLiteralSources = _metadataLiteralSources; }
+	void useMetadataLiteralSources(bool _metadataLiteralSources);
 
 	/// Adds a source object (e.g. file) to the parser. After this, parse has to be called again.
 	/// @returns true if a source object by the name already existed and was replaced.

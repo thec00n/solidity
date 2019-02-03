@@ -97,6 +97,27 @@ void CompilerStack::setEVMVersion(EVMVersion _version)
 	m_evmVersion = _version;
 }
 
+void CompilerStack::setLibraries(std::map<std::string, h160> const& _libraries)
+{
+	if (m_stackState < AnalysisSuccessful)
+		BOOST_THROW_EXCEPTION(CompilerError() << errinfo_comment("Set libraries after analysis."));
+	m_libraries = _libraries;
+}
+
+void CompilerStack::setOptimiserSettings(bool _optimize, unsigned _runs)
+{
+	if (m_stackState < AnalysisSuccessful)
+		BOOST_THROW_EXCEPTION(CompilerError() << errinfo_comment("Set optimiser settings after analysis."));
+	m_optimize = _optimize;
+	m_optimizeRuns = _runs;
+}
+
+void CompilerStack::useMetadataLiteralSources(bool _metadataLiteralSources) {
+	if (m_stackState < AnalysisSuccessful)
+		BOOST_THROW_EXCEPTION(CompilerError() << errinfo_comment("Set use literal sources after analysis."));
+	m_metadataLiteralSources = _metadataLiteralSources;
+}
+
 void CompilerStack::reset(bool _keepSources)
 {
 	if (_keepSources)
