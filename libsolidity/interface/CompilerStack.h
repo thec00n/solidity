@@ -275,7 +275,7 @@ private:
 		std::shared_ptr<Compiler> compiler;
 		eth::LinkerObject object; ///< Deployment object (includes the runtime sub-object).
 		eth::LinkerObject runtimeObject; ///< Runtime object.
-		std::string metadata; ///< The metadata json that will be hashed into the chain.
+		mutable std::unique_ptr<std::string const> metadata; ///< The metadata json that will be hashed into the chain.
 		mutable std::unique_ptr<Json::Value const> abi;
 		mutable std::unique_ptr<Json::Value const> userDocumentation;
 		mutable std::unique_ptr<Json::Value const> devDocumentation;
@@ -337,6 +337,10 @@ private:
 	/// @returns the Natspec Developer documentation as a JSON object.
 	/// This will generate the JSON object and store it in the Contract object if it is not present yet.
 	Json::Value const& natspecDev(Contract const&) const;
+
+	/// @returns the Contract Metadata
+	/// This will generate the metadata and store it in the Contract object if it is not present yet.
+	std::string const& metadata(Contract const&) const;
 
 	/// @returns the offset of the entry point of the given function into the list of assembly items
 	/// or zero if it is not found or does not exist.
