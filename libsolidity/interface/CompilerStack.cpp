@@ -948,7 +948,7 @@ string CompilerStack::createMetadata(Contract const& _contract) const
 
 bytes CompilerStack::createCBORMetadata(string const& _metadata, bool _experimentalMode)
 {
-	bytes versionBytes = asBytes(VersionStringStrict);
+	bytes const& versionBytes = VersionCompactBytes; // asBytes(VersionStringStrict);
 	unsigned versionBytesSize = versionBytes.size();
 	solAssert(versionBytesSize <= 0xff, "");
 	bytes cborEncodedHash =

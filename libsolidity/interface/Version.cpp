@@ -44,6 +44,8 @@ string const dev::solidity::VersionStringStrict =
 	(string(SOL_VERSION_PRERELEASE).empty() ? "" : "-" + string(SOL_VERSION_PRERELEASE)) +
 	(string(SOL_VERSION_COMMIT).empty() ? "" : "+" + string(SOL_VERSION_COMMIT));
 
+bytes const dev::solidity::VersionCompactBytes = binaryVersion();
+
 bytes dev::solidity::binaryVersion()
 {
 	bytes ret{0};
