@@ -154,21 +154,32 @@ AssemblyItems CodeCopyMethod::execute(Assembly& _assembly) const
 	AssemblyItems actualCopyRoutine = copyRoutine();
 	actualCopyRoutine[3] = u256(data.size());
 	actualCopyRoutine[4] = _assembly.newData(data);
+	actualCopyRoutine[5] = (data.size() == 32) ? Instruction::DUP4 : (32 - data.size());
 	return actualCopyRoutine;
 }
 
 AssemblyItems const& CodeCopyMethod::copyRoutine()
 {
 	AssemblyItems static copyRoutine{
+		// constant to be reused 3+ times
 		u256(0),
+
+		// back up memory
+		// mload(0)
 		Instruction::DUP1,
-		Instruction::MLOAD, // back up memory
+		Instruction::MLOAD,
+
+		// codecopy(0, <pushdata>, 32)
 		u256(32), // replaced above in actualCopyRoutine[3]
 		AssemblyItem(PushData, u256(1) << 16), // replaced above in actualCopyRoutine[4]
-		Instruction::DUP4,
+		Instruction::DUP4, // replaced above in actualCopyRoutine[5]
 		Instruction::CODECOPY,
+
+		// mload(0)
 		Instruction::DUP2,
 		Instruction::MLOAD,
+
+		// restore original memory
 		Instruction::SWAP2,
 		Instruction::MSTORE
 	};
