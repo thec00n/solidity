@@ -151,10 +151,15 @@ bigint CodeCopyMethod::gasNeeded() const
 AssemblyItems CodeCopyMethod::execute(Assembly& _assembly) const
 {
 	bytes data = toCompactBigEndian(m_value, 1);
+	assertThrow(data.size() >= 1 && data.size() <= 32, OptimizerException, "Invalid number encoding.");
 	AssemblyItems actualCopyRoutine = copyRoutine();
-	actualCopyRoutine[3] = u256(data.size());
 	actualCopyRoutine[4] = _assembly.newData(data);
-	actualCopyRoutine[5] = (data.size() == 32) ? Instruction::DUP4 : (32 - data.size());
+	if (data.size() != 32)
+	{
+		// Update sizes for short encodings.
+		actualCopyRoutine[3] = u256(data.size());
+		actualCopyRoutine[5] = u256(32 - data.size());
+	}
 	return actualCopyRoutine;
 }
 
