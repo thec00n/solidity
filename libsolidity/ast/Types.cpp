@@ -2079,6 +2079,21 @@ u256 StructType::storageSize() const
 	return max<u256>(1, members(nullptr).storageSize());
 }
 
+BoolResult StructType::canLiveOutsideStorage() const
+{
+	bool canLive = true;
+	string message;
+	for (auto const& member: m_struct.members())
+	if (!recursive())
+	{
+		canLive &= member->type()->canLiveOutsideStorage();
+		message += member->type()->canLiveOutsideStorage().message();
+	}
+	if (canLive)
+		return true;
+	return BoolResult{message};
+}
+
 string StructType::toString(bool _short) const
 {
 	string ret = "struct " + m_struct.annotation().canonicalName;

@@ -7,4 +7,5 @@ contract Test {
 	}
 }
 // ----
+// TypeError: (104-114): Type struct Test.S memory is only valid in storage.
 // TypeError: (118-121): Member "b" is not available in struct Test.S memory outside of storage.
