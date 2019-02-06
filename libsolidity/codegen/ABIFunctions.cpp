@@ -306,9 +306,26 @@ string ABIFunctions::validatorFunction(Type const& _type, bool _revertOnFailure)
 			if (type.numBits() == 256)
 				templ("body", "cleaned := value");
 			else if (type.isSigned())
-				templ("body", "cleaned := signextend(" + to_string(type.numBits() / 8 - 1) + ", value)");
+			{
+				Whiskers w("if iszero(eq(value, signextend(<signbit>, value))) { <failure> } cleaned := value");
+				w("signbit", to_string(type.numBits() / 8 - 1));
+				if (_revertOnFailure)
+					w("failure", "revert(0, 0)");
+				else
+					w("failure", "invalid()");
+				templ("body", w.render());
+			}
 			else
-				templ("body", "cleaned := and(value, " + toCompactHexWithPrefix((u256(1) << type.numBits()) - 1) + ")");
+			{
+				u256 mask = (u256(1) << type.numBits()) - 1;
+				Whiskers w("if gt(value, <mask>) { <failure> } cleaned := value");
+				w("mask", toCompactHexWithPrefix(mask));
+				if (_revertOnFailure)
+					w("failure", "revert(0, 0)");
+				else
+					w("failure", "invalid()");
+				templ("body", w.render());
+			}
 			break;
 		}
 		case Type::Category::RationalNumber:
