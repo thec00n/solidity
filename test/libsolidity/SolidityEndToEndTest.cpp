@@ -8283,6 +8283,62 @@ BOOST_AUTO_TEST_CASE(calldata_struct_function_type)
 	ABI_CHECK(callContractFunctionNoEncoding("f((function))", fn_C_h), encodeArgs(23));
 }
 
+BOOST_AUTO_TEST_CASE(calldata_array_dynamic)
+{
+	char const* sourceCode = R"(
+		pragma experimental ABIEncoderV2;
+		contract C {
+			function f1(uint[][1] calldata a) external returns (uint256, uint256, uint256, uint256) {
+				return (a[0].length, a[0][0], a[0][1], a[0][2]);
+			}
+			function f2(uint[][1] calldata a, uint[][1] calldata b) external returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
+				return (a[0].length, a[0][0], a[0][1], a[0][2], b[0].length, b[0][0], b[0][1]);
+			}
+			function g1(uint[3][2] calldata a) external returns (uint256, uint256, uint256, uint256, uint256, uint256) {
+				return (a[0][0], a[0][1], a[0][2], a[1][0], a[1][1], a[1][2]);
+			}
+			function g2(uint[][2] calldata a) external returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
+				return (a[0].length, a[0][0], a[0][1], a[0][2], a[1].length, a[1][0], a[1][1], a[1][2]);
+			}
+			function g3(uint[][] calldata a) external returns (uint256[8] memory) {
+				return [a.length, a[0].length, a[0][0], a[0][1], a[1].length, a[1][0], a[1][1], a[1][2]];
+			}
+		}
+	)";
+	compileAndRun(sourceCode, 0, "C");
+
+	ABI_CHECK(
+	    callContractFunction("f1(uint256[][1])", 0x20, 0x20, 3, 1, 2, 3),
+	    encodeArgs(3, 1, 2, 3)
+	);
+	ABI_CHECK(
+	    callContractFunction("f2(uint256[][1],uint256[][1])", 0x40, 0xE0, 0x20, 3, 1, 2, 3, 0x20, 2, 1, 2),
+	    encodeArgs(3, 1, 2, 3, 2, 1, 2)
+	);
+	ABI_CHECK(
+	    callContractFunction("g1(uint256[3][2])", 1, 2, 3, 4, 5, 6),
+	    encodeArgs(1, 2, 3, 4, 5, 6)
+	);
+	ABI_CHECK(
+	    callContractFunction("g2(uint256[][2])", 0x20, 0x40, 0xC0, 3, 1, 2, 3, 3, 4, 5, 6),
+	    encodeArgs(3, 1, 2, 3, 3, 4, 5, 6)
+	);
+	// same offset for both arrays
+	ABI_CHECK(
+	    callContractFunction("g2(uint256[][2])", 0x20, 0x40, 0x40, 3, 1, 2, 3),
+	    encodeArgs(3, 1, 2, 3, 3, 1, 2, 3)
+	);
+	// overlapping arrays (re-/abuse value 3 as length of second array)
+	ABI_CHECK(
+	    callContractFunction("g2(uint256[][2])", 0x20, 0x40, 0xA0, 3, 1, 2, 3, 4, 5, 6),
+	    encodeArgs(3, 1, 2, 3, 3, 4, 5, 6)
+	);
+	ABI_CHECK(
+	    callContractFunction("g3(uint256[][])", 0x20, 2, 0x40, 0xA0, 2, 1, 2, 3, 3, 4, 5),
+	    encodeArgs(2, 2, 1, 2, 3, 3, 4, 5)
+	);
+}
+
 BOOST_AUTO_TEST_CASE(literal_strings)
 {
 	char const* sourceCode = R"(

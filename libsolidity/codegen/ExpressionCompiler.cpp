@@ -1511,10 +1511,10 @@ bool ExpressionCompiler::visit(IndexAccess const& _indexAccess)
 		_indexAccess.indexExpression()->accept(*this);
 		utils().convertType(*_indexAccess.indexExpression()->annotation().type, IntegerType::uint256(), true);
 		// stack layout: <base_ref> [<length>] <index>
-		ArrayUtils(m_context).accessIndex(arrayType);
 		switch (arrayType.location())
 		{
 		case DataLocation::Storage:
+			ArrayUtils(m_context).accessIndex(arrayType);
 			if (arrayType.isByteArray())
 			{
 				solAssert(!arrayType.isString(), "Index access to string is not allowed.");
@@ -1524,18 +1524,67 @@ bool ExpressionCompiler::visit(IndexAccess const& _indexAccess)
 				setLValueToStorageItem(_indexAccess);
 			break;
 		case DataLocation::Memory:
+			ArrayUtils(m_context).accessIndex(arrayType);
 			setLValue<MemoryItem>(_indexAccess, *_indexAccess.annotation().type, !arrayType.isByteArray());
 			break;
 		case DataLocation::CallData:
-			//@todo if we implement this, the value in calldata has to be added to the base offset
-			solUnimplementedAssert(!arrayType.baseType()->isDynamicallySized(), "Nested arrays not yet implemented.");
-			if (arrayType.baseType()->isValueType())
-				CompilerUtils(m_context).loadFromMemoryDynamic(
-					*arrayType.baseType(),
-					true,
-					!arrayType.isByteArray(),
-					false
+			if (arrayType.baseType()->isDynamicallySized())
+			{
+				unsigned int baseEncodedSize = arrayType.baseType()->calldataEncodedSize();
+				if (auto const* baseArrayType = dynamic_cast<ArrayType const*>(arrayType.baseType().get()))
+					if (baseArrayType->isByteArray())
+						baseEncodedSize = 1;
+
+				// stack layout: <base_ref> <length> <index>
+				ArrayUtils(m_context).accessIndex(arrayType, true, true);
+				// stack layout: <base_ref> <ptr_to_length>
+
+				// TODO: The following is *almost* CompilerUtils(m_context).abiDecode({arrayType.baseType()}, false);
+
+				// returns the absolute offset of the accessed element in "base_ref"
+				// and the length of the accessed element in "ptr_to_length"
+				m_context.appendInlineAssembly( // TODO: not yet overflow safe.
+					Whiskers(R"({
+					if iszero(slt(add(ptr_to_length, 0x1f), calldatasize())) { revert(0, 0) }
+                    let abs_offset_of_length := add(base_ref, calldataload(ptr_to_length))
+                    base_ref := add(abs_offset_of_length, 0x20)
+					if iszero(slt(add(abs_offset_of_length, 0x1f), calldatasize())) { revert(0, 0) }
+                    ptr_to_length := calldataload(abs_offset_of_length)
+					if gt(add(base_ref, mul(ptr_to_length,<baseEncodedSize>)), calldatasize()) { revert(0, 0) }
+				})")("baseEncodedSize", toCompactHexWithPrefix(baseEncodedSize)).render(),
+					{"base_ref", "ptr_to_length"}
 				);
+				// stack layout: <absolute_offset_of_element> <length_of_element>
+
+/*				// Same as above without bounds checking.
+				// TODO: TO BE REMOVED
+				m_context << Instruction::CALLDATALOAD;
+				// stack layout: <base_ref> <rel_offset_of_length>
+
+				m_context << Instruction::ADD;
+				// stack layout: <abs_offset_to_length>
+
+				m_context << Instruction::DUP1;
+				m_context << Instruction::CALLDATALOAD;
+				// stack layout: <ptr_to_length> <length>
+				m_context << Instruction::SWAP1;
+				// stack layout: <length> <ptr_to_length>
+				m_context << u256(0x20);
+				m_context << Instruction::ADD;
+				m_context << Instruction::SWAP1;
+				// stack layout: <ptr_to_data> <length>*/
+			}
+			else
+			{
+				ArrayUtils(m_context).accessIndex(arrayType, true);
+				if (arrayType.baseType()->isValueType())
+					CompilerUtils(m_context).loadFromMemoryDynamic(
+						*arrayType.baseType(),
+						true,
+						!arrayType.isByteArray(),
+						false
+					);
+			}
 			break;
 		}
 	}

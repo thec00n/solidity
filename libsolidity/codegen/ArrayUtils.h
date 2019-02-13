@@ -98,10 +98,11 @@ public:
 	/// If @a _arrayType is a byte array, takes tight coding into account.
 	void storeLength(ArrayType const& _arrayType, unsigned _stackDepthLength = 0, unsigned _stackDepthRef = 1) const;
 	/// Performs bounds checking and returns a reference on the stack.
+	/// If @a _keepReference is true, the reference is kept on the stack.
 	/// Stack pre: reference [length] index
-	/// Stack post (storage): storage_slot byte_offset
-	/// Stack post: memory/calldata_offset
-	void accessIndex(ArrayType const& _arrayType, bool _doBoundsCheck = true) const;
+	/// Stack post (storage): [reference] storage_slot byte_offset
+	/// Stack post: [reference] memory/calldata_offset
+	void accessIndex(ArrayType const& _arrayType, bool _doBoundsCheck = true, bool _keepReference = false) const;
 
 private:
 	/// Adds the given number of bytes to a storage byte offset counter and also increments

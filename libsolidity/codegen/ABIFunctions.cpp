@@ -1361,8 +1361,6 @@ string ABIFunctions::abiDecodingFunctionCalldataArray(ArrayType const& _type)
 	solAssert(_type.dataStoredIn(DataLocation::CallData), "");
 	if (!_type.isDynamicallySized())
 		solAssert(_type.length() < u256("0xffffffffffffffff"), "");
-	if (_type.baseType()->isDynamicallyEncoded())
-		solUnimplemented("Calldata arrays with non-value base types are not yet supported by Solidity.");
 	solAssert(_type.baseType()->calldataEncodedSize() < u256("0xffffffffffffffff"), "");
 
 	string functionName =
@@ -1393,7 +1391,7 @@ string ABIFunctions::abiDecodingFunctionCalldataArray(ArrayType const& _type)
 		w("functionName", functionName);
 		w("readableTypeName", _type.toString(true));
 		w("baseEncodedSize", toCompactHexWithPrefix(_type.isByteArray() ? 1 : _type.baseType()->calldataEncodedSize()));
-		w("length", _type.isDynamicallyEncoded() ? "length" : toCompactHexWithPrefix(_type.length()));
+		w("length", _type.isDynamicallySized() ? "length" : toCompactHexWithPrefix(_type.length()));
 		return w.render();
 	});
 }
