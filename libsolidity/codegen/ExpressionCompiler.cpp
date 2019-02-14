@@ -1530,10 +1530,9 @@ bool ExpressionCompiler::visit(IndexAccess const& _indexAccess)
 		case DataLocation::CallData:
 			if (arrayType.baseType()->isDynamicallySized())
 			{
-				unsigned int baseEncodedSize = arrayType.baseType()->calldataEncodedSize();
-				if (auto const* baseArrayType = dynamic_cast<ArrayType const*>(arrayType.baseType().get()))
-					if (baseArrayType->isByteArray())
-						baseEncodedSize = 1;
+				unsigned int baseEncodedSize = arrayType.baseType()->category() == Type::Category::Array ?
+					dynamic_cast<ArrayType const&>(*arrayType.baseType()).calldataStride() :
+					arrayType.baseType()->calldataEncodedSize();
 
 				// stack layout: <base_ref> <length> <index>
 				ArrayUtils(m_context).accessIndex(arrayType, true, true);

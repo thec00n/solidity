@@ -8339,6 +8339,53 @@ BOOST_AUTO_TEST_CASE(calldata_array_dynamic)
 	);
 }
 
+BOOST_AUTO_TEST_CASE(calldata_array_dynamic_bytes)
+{
+	char const* sourceCode = R"(
+		pragma experimental ABIEncoderV2;
+		contract C {
+			function f1(bytes[1] calldata a) external returns (uint256, uint256, uint256, uint256) {
+				return (a[0].length, uint8(a[0][0]), uint8(a[0][1]), uint8(a[0][2]));
+			}
+			function f2(bytes[1] calldata a, bytes[1] calldata b) external returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
+				return (a[0].length, uint8(a[0][0]), uint8(a[0][1]), uint8(a[0][2]), b[0].length, uint8(b[0][0]), uint8(b[0][1]));
+			}
+			function g1(bytes[2] calldata a) external returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
+				return (a[0].length, uint8(a[0][0]), uint8(a[0][1]), uint8(a[0][2]), a[1].length, uint8(a[1][0]), uint8(a[1][1]), uint8(a[1][2]));
+			}
+			function g2(bytes[] calldata a) external returns (uint256[8] memory) {
+				return [a.length, a[0].length, uint8(a[0][0]), uint8(a[0][1]), a[1].length, uint8(a[1][0]), uint8(a[1][1]), uint8(a[1][2])];
+			}
+		}
+	)";
+	compileAndRun(sourceCode, 0, "C");
+
+    bytes bytes010203 = bytes{1,2,3}+bytes(29,0);
+    bytes bytes040506 = bytes{4,5,6}+bytes(29,0);
+    bytes bytes0102 = bytes{0x01,02}+bytes(30,0);
+	ABI_CHECK(
+	    callContractFunction("f1(bytes[1])", 0x20, 0x20, 3, bytes010203),
+	    encodeArgs(3, 1, 2, 3)
+	);
+	ABI_CHECK(
+	    callContractFunction("f2(bytes[1],bytes[1])", 0x40, 0xA0, 0x20, 3, bytes010203, 0x20, 2, bytes0102),
+	    encodeArgs(3, 1, 2, 3, 2, 1, 2)
+	);
+	ABI_CHECK(
+	    callContractFunction("g1(bytes[2])", 0x20, 0x40, 0x80, 3, bytes010203, 3, bytes040506),
+	    encodeArgs(3, 1, 2, 3, 3, 4, 5, 6)
+	);
+	// same offset for both arrays
+	ABI_CHECK(
+	    callContractFunction("g1(bytes[2])", 0x20, 0x40, 0x40, 3, bytes010203),
+	    encodeArgs(3, 1, 2, 3, 3, 1, 2, 3)
+	);
+	ABI_CHECK(
+	    callContractFunction("g2(bytes[])", 0x20, 2, 0x40, 0x80, 2, bytes0102, 3, bytes040506),
+	    encodeArgs(2, 2, 1, 2, 3, 4, 5, 6)
+	);
+}
+
 BOOST_AUTO_TEST_CASE(literal_strings)
 {
 	char const* sourceCode = R"(
