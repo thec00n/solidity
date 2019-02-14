@@ -8386,6 +8386,43 @@ BOOST_AUTO_TEST_CASE(calldata_array_dynamic_bytes)
 	);
 }
 
+BOOST_AUTO_TEST_CASE(calldata_array_dynamic_bounds)
+{
+	char const* sourceCode = R"(
+		pragma experimental ABIEncoderV2;
+		contract C {
+			function f(uint256[][1] calldata a, uint256 offset) external returns (uint256) {
+				return a[0][offset];
+			}
+		}
+	)";
+	compileAndRun(sourceCode, 0, "C");
+
+    // valid accesses
+	ABI_CHECK(
+	    callContractFunction("f(uint256[][1],uint256)", 0x40, 0, 0x20, 3, 1, 2, 3),
+	    encodeArgs(1)
+	);
+	ABI_CHECK(
+	    callContractFunction("f(uint256[][1],uint256)", 0x40, 1, 0x20, 3, 1, 2, 3),
+	    encodeArgs(2)
+	);
+	ABI_CHECK(
+	    callContractFunction("f(uint256[][1],uint256)", 0x40, 2, 0x20, 3, 1, 2, 3),
+	    encodeArgs(3)
+	);
+	// out of bounds access
+	ABI_CHECK(
+	    callContractFunction("f(uint256[][1],uint256)", 0x40, 3, 0x20, 3, 1, 2, 3),
+	    encodeArgs()
+	);
+	// out of bounds array size
+    ABI_CHECK(
+        callContractFunction("f(uint256[][1],uint256)", 0x40, 0, 0x20, 4, 1, 2, 3),
+        encodeArgs()
+    );
+}
+
 BOOST_AUTO_TEST_CASE(literal_strings)
 {
 	char const* sourceCode = R"(
