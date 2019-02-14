@@ -1,6 +1,7 @@
 ### 0.5.5 (unreleased)
 
 Language Features:
+  * Allow calldata arrays with dynamically encoded base types with ABIEncoderV2.
 
 
 Compiler Features:
