@@ -1546,10 +1546,10 @@ bool ExpressionCompiler::visit(IndexAccess const& _indexAccess)
 				m_context.appendInlineAssembly( // TODO: not yet overflow safe.
 					Whiskers(R"({
 					if iszero(slt(add(ptr_to_length, 0x1f), calldatasize())) { revert(0, 0) }
-                    let abs_offset_of_length := add(base_ref, calldataload(ptr_to_length))
-                    base_ref := add(abs_offset_of_length, 0x20)
+					let abs_offset_of_length := add(base_ref, calldataload(ptr_to_length))
+					base_ref := add(abs_offset_of_length, 0x20)
 					if iszero(slt(add(abs_offset_of_length, 0x1f), calldatasize())) { revert(0, 0) }
-                    ptr_to_length := calldataload(abs_offset_of_length)
+					ptr_to_length := calldataload(abs_offset_of_length)
 					if gt(add(base_ref, mul(ptr_to_length,<baseEncodedSize>)), calldatasize()) { revert(0, 0) }
 				})")("baseEncodedSize", toCompactHexWithPrefix(baseEncodedSize)).render(),
 					{"base_ref", "ptr_to_length"}
