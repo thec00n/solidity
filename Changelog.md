@@ -5,6 +5,7 @@ Language Features:
 
 Compiler Features:
  * SMTChecker: Do not report underflow/overflow if they always revert. This removes false positives when using ``SafeMath``.
+ * SMTChecker: Support one-dimensional arrays.
  * Static Analyzer: Warn about expressions with custom types when they have no effect.
  * Optimizer: Add rule for shifts with constants for Constantinople.
 
