@@ -1544,8 +1544,9 @@ bool ExpressionCompiler::visit(IndexAccess const& _indexAccess)
 				m_context.appendInlineAssembly(
 					Whiskers(R"({
 					if iszero(slt(add(ptr_to_length, 0x1f), calldatasize())) { revert(0, 0) }
-					let abs_offset_of_length := add(base_ref, calldataload(ptr_to_length))
-					if iszero(slt(add(abs_offset_of_length, 0x1f), calldatasize())) { revert(0, 0) }
+					let rel_offset_of_length := calldataload(ptr_to_length)
+					if iszero(slt(rel_offset_of_length, sub(sub(calldatasize(), base_ref), 0x1f))) { revert(0, 0) }
+					let abs_offset_of_length := add(base_ref, rel_offset_of_length)
 					base_ref := add(abs_offset_of_length, 0x20)
 					ptr_to_length := calldataload(abs_offset_of_length)
 					if gt(ptr_to_length, 0xffffffffffffffff) { revert(0, 0) }
@@ -1558,6 +1559,7 @@ bool ExpressionCompiler::visit(IndexAccess const& _indexAccess)
 			else
 			{
 				ArrayUtils(m_context).accessIndex(arrayType, true);
+				// TODO: check bounds if dynamically encoded
 				if (arrayType.baseType()->isValueType())
 					CompilerUtils(m_context).loadFromMemoryDynamic(
 						*arrayType.baseType(),

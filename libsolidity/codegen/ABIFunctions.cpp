@@ -1390,7 +1390,8 @@ string ABIFunctions::abiDecodingFunctionCalldataArray(ArrayType const& _type)
 		w("functionName", functionName);
 		w("readableTypeName", _type.toString(true));
 		w("baseEncodedSize", toCompactHexWithPrefix(_type.isByteArray() ? 1 : _type.baseType()->calldataEncodedSize()));
-		w("length", toCompactHexWithPrefix(_type.length()));
+		if (!_type.isDynamicallySized())
+			w("length", toCompactHexWithPrefix(_type.length()));
 		return w.render();
 	});
 }
