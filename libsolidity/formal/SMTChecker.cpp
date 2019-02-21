@@ -273,6 +273,23 @@ void SMTChecker::endVisit(VariableDeclarationStatement const& _varDecl)
 		);
 }
 
+bool SMTChecker::visit(Assignment const& _assignment)
+{
+	// Erase knowledge about references before the right hand side smt::Expression is created
+	// to take the new value into account.
+	if (Identifier const* identifier = dynamic_cast<Identifier const*>(&_assignment.leftHandSide()))
+	{
+		VariableDeclaration const& decl = dynamic_cast<VariableDeclaration const&>(*identifier->annotation().referencedDeclaration);
+		solAssert(knownVariable(decl), "");
+		if (decl.hasReferenceOrMappingType())
+			resetVariables([&](VariableDeclaration const& _var) {
+				return _var != decl && *_var.type() == *decl.type();
+			});
+	}
+
+	return true;
+}
+
 void SMTChecker::endVisit(Assignment const& _assignment)
 {
 	if (_assignment.assignmentOperator() != Token::Assign)
@@ -533,13 +550,6 @@ void SMTChecker::visitGasLeft(FunctionCall const& _funCall)
 	setUnknownValue(*symbolicVar);
 	if (index > 0)
 		m_interface->addAssertion(symbolicVar->currentValue() <= symbolicVar->valueAtIndex(index - 1));
-}
-
-void SMTChecker::eraseArrayKnowledge()
-{
-	for (auto const& var: m_variables)
-		if (var.first->annotation().type->category() == Type::Category::Mapping)
-			newValue(*var.first);
 }
 
 void SMTChecker::inlineFunctionCall(FunctionCall const& _funCall)
@@ -806,7 +816,6 @@ void SMTChecker::endVisit(IndexAccess const& _indexAccess)
 void SMTChecker::arrayAssignment()
 {
 	m_arrayAssignmentHappened = true;
-	eraseArrayKnowledge();
 }
 
 void SMTChecker::arrayIndexAssignment(Assignment const& _assignment)
@@ -816,6 +825,12 @@ void SMTChecker::arrayIndexAssignment(Assignment const& _assignment)
 	{
 		auto const& varDecl = dynamic_cast<VariableDeclaration const&>(*id->annotation().referencedDeclaration);
 		solAssert(knownVariable(varDecl), "");
+
+		if (varDecl.hasReferenceOrMappingType())
+			resetVariables([&](VariableDeclaration const& _var) {
+				return _var != varDecl && *_var.type() == *varDecl.type();
+			});
+
 		smt::Expression store = smt::Expression::store(
 			m_variables[&varDecl]->currentValue(),
 			expr(*indexAccess.indexExpression()),
@@ -1021,11 +1036,12 @@ void SMTChecker::assignment(VariableDeclaration const& _variable, Expression con
 void SMTChecker::assignment(VariableDeclaration const& _variable, smt::Expression const& _value, SourceLocation const& _location)
 {
 	TypePointer type = _variable.type();
-	if (dynamic_cast<IntegerType const*>(type.get()))
+	Type::Category cat = type->category();
+	if (cat == Type::Category::Integer)
 		addOverflowTarget(OverflowTarget::Type::All, type,	_value,	_location);
-	else if (dynamic_cast<AddressType const*>(type.get()))
+	else if (cat == Type::Category::Address)
 		addOverflowTarget(OverflowTarget::Type::All, make_shared<IntegerType>(160), _value, _location);
-	else if (dynamic_cast<MappingType const*>(type.get()))
+	else if (cat == Type::Category::Mapping)
 		arrayAssignment();
 	m_interface->addAssertion(newValue(_variable) == _value);
 }

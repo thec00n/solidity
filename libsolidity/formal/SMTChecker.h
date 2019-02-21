@@ -69,6 +69,7 @@ private:
 	bool visit(WhileStatement const& _node) override;
 	bool visit(ForStatement const& _node) override;
 	void endVisit(VariableDeclarationStatement const& _node) override;
+	bool visit(Assignment const& _node) override;
 	void endVisit(Assignment const& _node) override;
 	void endVisit(TupleExpression const& _node) override;
 	void endVisit(UnaryOperation const& _node) override;
@@ -103,8 +104,6 @@ private:
 	void arrayAssignment();
 	/// Handles assignment to SMT array index.
 	void arrayIndexAssignment(Assignment const& _assignment);
-	/// Erases information about SMT arrays.
-	void eraseArrayKnowledge();
 
 	/// Division expression in the given type. Requires special treatment because
 	/// of rounding for signed division.
