@@ -977,7 +977,13 @@ void ContractCompiler::appendMissingFunctions()
 	m_context.appendMissingLowLevelFunctions();
 	auto abiFunctions = m_context.abiFunctions().requestedFunctions();
 	if (!abiFunctions.first.empty())
-		m_context.appendInlineAssembly("{" + move(abiFunctions.first) + "}", {}, abiFunctions.second, true);
+		m_context.appendInlineAssembly(
+			"{" + move(abiFunctions.first) + "}",
+			{},
+			abiFunctions.second,
+			true,
+			m_optimiserSettings.runYulOptimiser
+		);
 }
 
 void ContractCompiler::appendModifierOrFunctionCode()
